@@ -26,7 +26,7 @@ package com.yourlocalfax.jsquirrel;
 
 public class JSqObject {
 	
-	long m_nativeHandle;
+	final long m_nativeHandle;
 	
 	JSqObject(long handle) {
 		m_nativeHandle = handle;

@@ -24,12 +24,21 @@ THE SOFTWARE.
 
 package com.yourlocalfax.jsquirrel;
 
-public class JSqResult {
+public class JSqUserData {
 	
-	final int m_value;
+	final JSqUserPointer m_pointer, m_typetag;
 	
-	JSqResult(int value) {
-		m_value = value;
+	JSqUserData(JSqUserPointer pointer, JSqUserPointer typetag) {
+		m_pointer = pointer;
+		m_typetag = typetag;
+	}
+
+	public JSqUserPointer getPointer() {
+		return m_pointer;
+	}
+
+	public JSqUserPointer getTypetag() {
+		return m_typetag;
 	}
 	
 }

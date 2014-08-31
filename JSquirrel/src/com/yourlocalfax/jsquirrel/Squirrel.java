@@ -198,8 +198,8 @@ public class Squirrel {
 	
 	// TODO Object Creation Handling
 	
-	public static long sq_newuserdata(JSqVM v, long size) {
-		return sq_newuserdata_native(v.m_nativeHandle, size);
+	public static JSqUserPointer sq_newuserdata(JSqVM v, long size) {
+		return new JSqUserPointer(sq_newuserdata_native(v.m_nativeHandle, size));
 	}
 	
 	private static native long sq_newuserdata_native(long v, long size);
@@ -258,8 +258,8 @@ public class Squirrel {
 	
 	private static native void sq_pushbool_native(long v, boolean b);
 	
-	public static void sq_pushserpointer(JSqVM v, long up) {
-		sq_pushserpointer_native(v.m_nativeHandle, up);
+	public static void sq_pushserpointer(JSqVM v, JSqUserPointer up) {
+		sq_pushserpointer_native(v.m_nativeHandle, up.m_nativeHandle);
 	}
 	
 	private static native void sq_pushserpointer_native(long v, long up);
@@ -350,28 +350,33 @@ public class Squirrel {
 	
 	private static native long sq_getthread_native(long v, int idx);
 	
-	public static long sq_getuserpointer(JSqVM v, int idx) {
-		return sq_getuserpointer_native(v.m_nativeHandle, idx);
+	public static JSqUserPointer sq_getuserpointer(JSqVM v, int idx) {
+		return new JSqUserPointer(sq_getuserpointer_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native long sq_getuserpointer_native(long v, int idx);
 	
-	// getuserdata
-	
-	public static void sq_settypetag(JSqVM v, int idx) {
-		sq_settypetag_native(v.m_nativeHandle, idx);
+	public static JSqUserData sq_getuserdata(JSqVM v, int idx) {
+		long[] res = sq_getuserdata_native(v.m_nativeHandle, idx);
+		return new JSqUserData(new JSqUserPointer(res[0]), new JSqUserPointer(res[1]));
 	}
 	
-	private static native void sq_settypetag_native(long v, int idx);
+	private static native long[] sq_getuserdata_native(long v, int idx);
 	
-	public static JSqResult sq_setinstanceup(JSqVM v, int idx, long up) {
-		return new JSqResult(sq_setinstanceup_native(v.m_nativeHandle, idx, up));
+	public static JSqResult sq_settypetag(JSqVM v, int idx) {
+		return new JSqResult(sq_settypetag_native(v.m_nativeHandle, idx));
+	}
+	
+	private static native int sq_settypetag_native(long v, int idx);
+	
+	public static JSqResult sq_setinstanceup(JSqVM v, int idx, JSqUserPointer up) {
+		return new JSqResult(sq_setinstanceup_native(v.m_nativeHandle, idx, up.m_nativeHandle));
 	}
 	
 	private static native int sq_setinstanceup_native(long v, int idx, long up);
 	
-	public static long sq_getinstanceup(JSqVM v, int idx, long typetag) {
-		return sq_getinstanceup_native(v.m_nativeHandle, idx, typetag);
+	public static JSqUserPointer sq_getinstanceup(JSqVM v, int idx, JSqUserPointer typetag) {
+		return new JSqUserPointer(sq_getinstanceup_native(v.m_nativeHandle, idx, typetag.m_nativeHandle));
 	}
 	
 	private static native long sq_getinstanceup_native(long v, int idx, long typetag);
@@ -707,14 +712,14 @@ public class Squirrel {
 	
 	private static native float sq_objtofloat_native(long obj);
 	
-	public static long sq_objtouserpointer(JSqObject obj) {
-		return sq_objtouserpointer_native(obj.m_nativeHandle);
+	public static JSqUserPointer sq_objtouserpointer(JSqObject obj) {
+		return new JSqUserPointer(sq_objtouserpointer_native(obj.m_nativeHandle));
 	}
 	
 	private static native long sq_objtouserpointer_native(long obj);
 	
-	public static long sq_getobjtypetag(JSqObject obj) {
-		return sq_getobjtypetag_native(obj.m_nativeHandle);
+	public static JSqUserPointer sq_getobjtypetag(JSqObject obj) {
+		return new JSqUserPointer(sq_getobjtypetag_native(obj.m_nativeHandle));
 	}
 	
 	private static native long sq_getobjtypetag_native(long obj);
