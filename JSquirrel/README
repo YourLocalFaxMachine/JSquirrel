@@ -1,0 +1,20 @@
+JSquirrel
+=========
+
+JSquirrel 0.1u0
+
+JSquirrel is an open source wrapper library allowing Java programmers to make use
+of the Squirrel language.
+
+Squirrel is an open source scripting language released under the MIT License.
+http://www.squirrel-lang.org/
+
+-----------------------------------------------------
+This library has not been heavily tested yet and it no where near a completed stage. That
+said, some functionality is stable and Squirrel can be compiled and run. As far as testing
+has shown, methods can be called and variables pushed and pop from the stack. Much more
+should be possible, but only time and testing will tell.
+
+This is not a stable release. As previously stated, very minimal testing has been done.
+The current release of JSquirrel is simply so that the library can be tested in its current
+stages before more in-depth updates are made.
