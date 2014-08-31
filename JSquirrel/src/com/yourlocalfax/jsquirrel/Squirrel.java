@@ -24,15 +24,22 @@ THE SOFTWARE.
 
 package com.yourlocalfax.jsquirrel;
 
+/**
+ * The core Squirrel wrapper class.
+ * Most methods in here will directly represent a native Squirrel function call in the squirrel.h file.
+ * 
+ * 
+ * @author Christopher Foster
+ */
 public class Squirrel {
 	
 	static {
 		System.loadLibrary("JSquirrel");
 	}
 
-	public static final int SQ_VMSTATE_IDLE =		0;
-	public static final int SQ_VMSTATE_RUNNING =	1;
-	public static final int SQ_VMSTATE_SUSPENDED =	2;
+	private static final int SQ_VMSTATE_IDLE =			0;
+	private static final int SQ_VMSTATE_RUNNING =		1;
+	private static final int SQ_VMSTATE_SUSPENDED =		2;
 
 	public static final int SQOBJECT_REF_COUNTED =		0x08000000;
 	public static final int SQOBJECT_NUMERIC =			0x04000000;
@@ -60,22 +67,20 @@ public class Squirrel {
 	public static final int RT_WEAKREF =				0x00010000;
 	public static final int RT_OUTER =					0x00020000;
 	
-	// TODO Learn JNI stuff better and use everything, not just these!
-	
-	public static boolean SQ_OK(int res) {
-		return res == 0;
+	public static boolean SQ_OK(JSqResult res) {
+		return res.m_value == 0;
 	}
 	
-	public static boolean SQ_ERROR(int res) {
-		return res == -1;
+	public static boolean SQ_ERROR(JSqResult res) {
+		return res.m_value == -1;
 	}
 	
-	public static boolean SQ_FAILED(int res) {
-		return res < 0;
+	public static boolean SQ_FAILED(JSqResult res) {
+		return res.m_value < 0;
 	}
 	
-	public static boolean SQ_SUCCEDED(int res) {
-		return res >= 0;
+	public static boolean SQ_SUCCEDED(JSqResult res) {
+		return res.m_value >= 0;
 	}
 	
 	// TODO SquirrelVM
@@ -104,20 +109,29 @@ public class Squirrel {
 	
 	private static native void sq_close_native(long v);
 	
-	public static int sq_suspendvm(JSqVM v) {
-		return sq_suspendvm_native(v.m_nativeHandle);
+	public static JSqResult sq_suspendvm(JSqVM v) {
+		return new JSqResult(sq_suspendvm_native(v.m_nativeHandle));
 	}
 	
 	private static native int sq_suspendvm_native(long v);
 	
-	public static int sq_wakeupvm(JSqVM v, boolean resumedRet, boolean retVal, boolean raiseError, boolean throwError) {
-		return sq_wakeupvm_native(v.m_nativeHandle, resumedRet, retVal, raiseError, throwError);
+	public static JSqResult sq_wakeupvm(JSqVM v, boolean resumedRet, boolean retVal, boolean raiseError, boolean throwError) {
+		return new JSqResult(sq_wakeupvm_native(v.m_nativeHandle, resumedRet, retVal, raiseError, throwError));
 	}
 	
 	private static native int sq_wakeupvm_native(long v, boolean resumedRet, boolean retVal, boolean raiseError, boolean throwError);
 	
-	public static int sq_getvmstate(JSqVM v) {
-		return sq_getvmstate_native(v.m_nativeHandle);
+	public static JSqVMState sq_getvmstate(JSqVM v) {
+		int res = sq_getvmstate_native(v.m_nativeHandle);
+		switch (res) {
+			case SQ_VMSTATE_IDLE:
+				return JSqVMState.Idle;
+			case SQ_VMSTATE_SUSPENDED:
+				return JSqVMState.Suspended;
+			case SQ_VMSTATE_RUNNING:
+			default:
+				return JSqVMState.Running;
+		}
 	}
 	
 	private static native int sq_getvmstate_native(long v);
@@ -126,8 +140,8 @@ public class Squirrel {
 	
 	// TODO Compiler
 	
-	public static int sq_compilebuffer(JSqVM v, String source, String sourceName, boolean raiseError) {
-		return sq_compilebuffer_native(v.m_nativeHandle, source, sourceName, raiseError);
+	public static JSqResult sq_compilebuffer(JSqVM v, String source, String sourceName, boolean raiseError) {
+		return new JSqResult(sq_compilebuffer_native(v.m_nativeHandle, source, sourceName, raiseError));
 	}
 	
 	private static native int sq_compilebuffer_native(long v, String source, String sourceName, boolean raiseError);
@@ -170,8 +184,8 @@ public class Squirrel {
 	
 	private static native void sq_settop_native(long v, int newtop);
 	
-	public static int sq_reservestack(JSqVM v, int nSize) {
-		return sq_reservestack_native(v.m_nativeHandle, nSize);
+	public static JSqResult sq_reservestack(JSqVM v, int nSize) {
+		return new JSqResult(sq_reservestack_native(v.m_nativeHandle, nSize));
 	}
 	
 	private static native int sq_reservestack_native(long v, int nSize);
@@ -208,14 +222,14 @@ public class Squirrel {
 	
 	private static native void sq_newarray_native(long v, int size);
 	
-	public static int sq_setparamscheck(JSqVM v, int nParamsCheck, String typeMask) {
-		return sq_setparamscheck_native(v.m_nativeHandle, nParamsCheck, typeMask);
+	public static JSqResult sq_setparamscheck(JSqVM v, int nParamsCheck, String typeMask) {
+		return new JSqResult(sq_setparamscheck_native(v.m_nativeHandle, nParamsCheck, typeMask));
 	}
 	
 	private static native int sq_setparamscheck_native(long v, int nParamsCheck, String typeMask); 
 	
-	public static int sq_bindenv(JSqVM v, int idx) {
-		return sq_bindenv_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_bindenv(JSqVM v, int idx) {
+		return new JSqResult(sq_bindenv_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_bindenv_native(long v, int idx);
@@ -263,8 +277,8 @@ public class Squirrel {
 	
 	private static native int sq_gettype_native(long v, int idx); // Returns int because SQObjectType stores ints
 	
-	public static int sq_typeof(JSqVM v, int idx) {
-		return sq_typeof_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_typeof(JSqVM v, int idx) {
+		return new JSqResult(sq_typeof_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_typeof_native(long v, int idx);
@@ -281,8 +295,8 @@ public class Squirrel {
 	
 	private static native long sq_gethash_native(long v, int idx);
 	
-	public static int sq_getbase(JSqVM v, int idx) {
-		return sq_getbase_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_getbase(JSqVM v, int idx) {
+		return new JSqResult(sq_getbase_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_getbase_native(long v, int idx);
@@ -293,8 +307,9 @@ public class Squirrel {
 	
 	private static native boolean sq_instanceof_native(long v);
 	
-	public static int sq_tostring(JSqVM v, int idx) {
-		return sq_tostring_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_tostring(JSqVM v, int idx) {
+		int res = sq_tostring_native(v.m_nativeHandle, idx);
+		return new JSqResult(res);
 	}
 	
 	private static native int sq_tostring_native(long v, int idx);
@@ -349,8 +364,8 @@ public class Squirrel {
 	
 	private static native void sq_settypetag_native(long v, int idx);
 	
-	public static int sq_setinstanceup(JSqVM v, int idx, long up) {
-		return sq_setinstanceup_native(v.m_nativeHandle, idx, up);
+	public static JSqResult sq_setinstanceup(JSqVM v, int idx, long up) {
+		return new JSqResult(sq_setinstanceup_native(v.m_nativeHandle, idx, up));
 	}
 	
 	private static native int sq_setinstanceup_native(long v, int idx, long up);
@@ -361,38 +376,38 @@ public class Squirrel {
 	
 	private static native long sq_getinstanceup_native(long v, int idx, long typetag);
 	
-	public static int sq_setclassudsize(JSqVM v, int idx, int udSize) {
-		return sq_setclassudsize_native(v.m_nativeHandle, idx, udSize);
+	public static JSqResult sq_setclassudsize(JSqVM v, int idx, int udSize) {
+		return new JSqResult(sq_setclassudsize_native(v.m_nativeHandle, idx, udSize));
 	}
 	
 	private static native int sq_setclassudsize_native(long vmHaldne, int idx, int udSize);
 	
-	public static int sq_newclass(JSqVM v, boolean hasBase) {
-		return sq_newclass_native(v.m_nativeHandle, hasBase);
+	public static JSqResult sq_newclass(JSqVM v, boolean hasBase) {
+		return new JSqResult(sq_newclass_native(v.m_nativeHandle, hasBase));
 	}
 	
 	private static native int sq_newclass_native(long v, boolean hasBase);
 	
-	public static int sq_createinstance(JSqVM v, int idx) {
-		return sq_createinstance_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_createinstance(JSqVM v, int idx) {
+		return new JSqResult(sq_createinstance_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_createinstance_native(long v, int idx);
 	
-	public static int sq_setattributes(JSqVM v, int idx) {
-		return sq_setattributes_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_setattributes(JSqVM v, int idx) {
+		return new JSqResult(sq_setattributes_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_setattributes_native(long v, int idx);
 	
-	public static int sq_getattributes(JSqVM v, int idx) {
-		return sq_getattributes_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_getattributes(JSqVM v, int idx) {
+		return new JSqResult(sq_getattributes_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_getattributes_native(long v, int idx);
 	
-	public static int sq_getclass(JSqVM v, int idx) {
-		return sq_getclass_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_getclass(JSqVM v, int idx) {
+		return new JSqResult(sq_getclass_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_getclass_native(long v, int idx);
@@ -403,8 +418,8 @@ public class Squirrel {
 	
 	private static native void sq_weakref_native(long v, int idx);
 	
-	public static int sq_getdefaultdelegate(JSqVM v, JSqObjectType t) {
-		return sq_getdefaultdelegate_native(v.m_nativeHandle, t.tag);
+	public static JSqResult sq_getdefaultdelegate(JSqVM v, JSqObjectType t) {
+		return new JSqResult(sq_getdefaultdelegate_native(v.m_nativeHandle, t.tag));
 	}
 	
 	private static native int sq_getdefaultdelegate_native(long v, int tag);
@@ -431,160 +446,160 @@ public class Squirrel {
 	
 	private static native void sq_pushconsttable_native(long v);
 	
-	public static int sq_setroottable(JSqVM v) {
-		return sq_setroottable_native(v.m_nativeHandle);
+	public static JSqResult sq_setroottable(JSqVM v) {
+		return new JSqResult(sq_setroottable_native(v.m_nativeHandle));
 	}
 	
 	private static native int sq_setroottable_native(long v);
 	
-	public static int sq_setconsttable(JSqVM v) {
-		return sq_setconsttable_native(v.m_nativeHandle);
+	public static JSqResult sq_setconsttable(JSqVM v) {
+		return new JSqResult(sq_setconsttable_native(v.m_nativeHandle));
 	}
 	
 	private static native int sq_setconsttable_native(long v);
 	
-	public static int sq_newslot(JSqVM v, int idx, boolean bStatic) {
-		return sq_newslot_native(v.m_nativeHandle, idx, bStatic);
+	public static JSqResult sq_newslot(JSqVM v, int idx, boolean bStatic) {
+		return new JSqResult(sq_newslot_native(v.m_nativeHandle, idx, bStatic));
 	}
 	
 	private static native int sq_newslot_native(long v, int idx, boolean bStatic);
 	
-	public static int sq_deleteslot(JSqVM v, int idx, boolean pushVal) {
-		return sq_deleteslot_native(v.m_nativeHandle, idx, pushVal);
+	public static JSqResult sq_deleteslot(JSqVM v, int idx, boolean pushVal) {
+		return new JSqResult(sq_deleteslot_native(v.m_nativeHandle, idx, pushVal));
 	}
 	
 	private static native int sq_deleteslot_native(long v, int idx, boolean pushVal);
 	
-	public static int sq_set(JSqVM v, int idx) {
-		return sq_set_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_set(JSqVM v, int idx) {
+		return new JSqResult(sq_set_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_set_native(long v, int idx);
 	
-	public static int sq_get(JSqVM v, int idx) {
-		return sq_get_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_get(JSqVM v, int idx) {
+		return new JSqResult(sq_get_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_get_native(long v, int idx);
 	
-	public static int sq_rawset(JSqVM v, int idx) {
-		return sq_rawset_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_rawset(JSqVM v, int idx) {
+		return new JSqResult(sq_rawset_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_rawset_native(long v, int idx);
 	
-	public static int sq_rawget(JSqVM v, int idx) {
-		return sq_rawget_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_rawget(JSqVM v, int idx) {
+		return new JSqResult(sq_rawget_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_rawget_native(long v, int idx);
 	
-	public static int sq_rawdeleteslot(JSqVM v, int idx, boolean pushVal) {
-		return sq_rawdeleteslot_native(v.m_nativeHandle, idx, pushVal);
+	public static JSqResult sq_rawdeleteslot(JSqVM v, int idx, boolean pushVal) {
+		return new JSqResult(sq_rawdeleteslot_native(v.m_nativeHandle, idx, pushVal));
 	}
 	
 	private static native int sq_rawdeleteslot_native(long v, int idx, boolean pushVal);
 	
-	public static int sq_newmenber(JSqVM v, int idx, boolean bStatic) {
-		return sq_newmember_native(v.m_nativeHandle, idx, bStatic);
+	public static JSqResult sq_newmenber(JSqVM v, int idx, boolean bStatic) {
+		return new JSqResult(sq_newmember_native(v.m_nativeHandle, idx, bStatic));
 	}
 	
 	private static native int sq_newmember_native(long v, int idx, boolean bStatic);
 	
-	public static int sq_rawnewmenber(JSqVM v, int idx, boolean bStatic) {
-		return sq_rawnewmember_native(v.m_nativeHandle, idx, bStatic);
+	public static JSqResult sq_rawnewmenber(JSqVM v, int idx, boolean bStatic) {
+		return new JSqResult(sq_rawnewmember_native(v.m_nativeHandle, idx, bStatic));
 	}
 	
 	private static native int sq_rawnewmember_native(long v, int idx, boolean bStatic);
 	
-	public static int sq_arrayappend(JSqVM v, int idx) {
-		return sq_arrayappend_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_arrayappend(JSqVM v, int idx) {
+		return new JSqResult(sq_arrayappend_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_arrayappend_native(long v, int idx);
 	
-	public static int sq_arraypop(JSqVM v, int idx, boolean pushVal) {
-		return sq_arraypop_native(v.m_nativeHandle, idx, pushVal);
+	public static JSqResult sq_arraypop(JSqVM v, int idx, boolean pushVal) {
+		return new JSqResult(sq_arraypop_native(v.m_nativeHandle, idx, pushVal));
 	}
 	
 	private static native int sq_arraypop_native(long v, int idx, boolean pushVal);
 	
-	public static int sq_arrayresize(JSqVM v, int idx, int newSize) {
-		return sq_arrayresize_native(v.m_nativeHandle, idx, newSize);
+	public static JSqResult sq_arrayresize(JSqVM v, int idx, int newSize) {
+		return new JSqResult(sq_arrayresize_native(v.m_nativeHandle, idx, newSize));
 	}
 	
 	private static native int sq_arrayresize_native(long v, int idx, int newSize);
 	
-	public static int sq_arrayreverse(JSqVM v, int idx) {
-		return sq_arrayreverse_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_arrayreverse(JSqVM v, int idx) {
+		return new JSqResult(sq_arrayreverse_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_arrayreverse_native(long v, int idx);
 	
-	public static int sq_arrayremove(JSqVM v, int idx, int itemIdx) {
-		return sq_arrayremove_native(v.m_nativeHandle, idx, itemIdx);
+	public static JSqResult sq_arrayremove(JSqVM v, int idx, int itemIdx) {
+		return new JSqResult(sq_arrayremove_native(v.m_nativeHandle, idx, itemIdx));
 	}
 	
 	private static native int sq_arrayremove_native(long v, int idx, int itemIdx);
 	
-	public static int sq_arrayinsert(JSqVM v, int idx, int destPos) {
-		return sq_arrayinsert_native(v.m_nativeHandle, idx, destPos);
+	public static JSqResult sq_arrayinsert(JSqVM v, int idx, int destPos) {
+		return new JSqResult(sq_arrayinsert_native(v.m_nativeHandle, idx, destPos));
 	}
 	
 	private static native int sq_arrayinsert_native(long v, int idx, int destPos);
 	
-	public static int sq_setdelegate(JSqVM v, int idx) {
-		return sq_setdelegate_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_setdelegate(JSqVM v, int idx) {
+		return new JSqResult(sq_setdelegate_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_setdelegate_native(long v, int idx);
 	
-	public static int sq_getdelegate(JSqVM v, int idx) {
-		return sq_getdelegate_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_getdelegate(JSqVM v, int idx) {
+		return new JSqResult(sq_getdelegate_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_getdelegate_native(long v, int idx);
 	
-	public static int sq_clone(JSqVM v, int idx) {
-		return sq_clone_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_clone(JSqVM v, int idx) {
+		return new JSqResult(sq_clone_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_clone_native(long v, int idx);
 	
-	public static int sq_setfreevariable(JSqVM v, int idx, long nVal) {
-		return sq_setfreevariable_native(v.m_nativeHandle, idx, nVal);
+	public static JSqResult sq_setfreevariable(JSqVM v, int idx, long nVal) {
+		return new JSqResult(sq_setfreevariable_native(v.m_nativeHandle, idx, nVal));
 	}
 	
 	private static native int sq_setfreevariable_native(long v, int idx, long nVal);
 	
-	public static int sq_next(JSqVM v, int idx) {
-		return sq_next_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_next(JSqVM v, int idx) {
+		return new JSqResult(sq_next_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_next_native(long v, int idx);
 	
-	public static int sq_getweakrefval(JSqVM v, int idx) {
-		return sq_getweakrefval_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_getweakrefval(JSqVM v, int idx) {
+		return new JSqResult(sq_getweakrefval_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_getweakrefval_native(long v, int idx);
 	
-	public static int sq_clear(JSqVM v, int idx) {
-		return sq_clear_native(v.m_nativeHandle, idx);
+	public static JSqResult sq_clear(JSqVM v, int idx) {
+		return new JSqResult(sq_clear_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_clear_native(long v, int idx);
 	
 	// TODO Calls
 	
-	public static int sq_call(JSqVM v, int numParams, boolean retval, boolean raiseError) {
-		return sq_call_native(v.m_nativeHandle, numParams, retval, raiseError);
+	public static JSqResult sq_call(JSqVM v, int numParams, boolean retval, boolean raiseError) {
+		return new JSqResult(sq_call_native(v.m_nativeHandle, numParams, retval, raiseError));
 	}
 	
 	private static native int sq_call_native(long v, int numParams, boolean retval, boolean raiseError);
 	
-	public static int sq_resume(JSqVM v, boolean retval, boolean raiseError) {
-		return sq_resume_native(v.m_nativeHandle, retval, raiseError);
+	public static JSqResult sq_resume(JSqVM v, boolean retval, boolean raiseError) {
+		return new JSqResult(sq_resume_native(v.m_nativeHandle, retval, raiseError));
 	}
 	
 	private static native int sq_resume_native(long v, boolean retval, boolean raiseError);
@@ -595,8 +610,8 @@ public class Squirrel {
 	
 	private static native String sq_getlocal_native(long v, long level, long idx);
 	
-	public static int sq_getcallee(JSqVM v) {
-		return sq_getcallee_native(v.m_nativeHandle);
+	public static JSqResult sq_getcallee(JSqVM v) {
+		return new JSqResult(sq_getcallee_native(v.m_nativeHandle));
 	}
 	
 	private static native int sq_getcallee_native(long v);
@@ -607,14 +622,14 @@ public class Squirrel {
 	
 	private static native String sq_getfreevariable_native(long v, int idx, long nVal);
 	
-	public static int sq_throwerror(JSqVM v, String err) {
-		return sq_throwerror_native(v.m_nativeHandle, err);
+	public static JSqResult sq_throwerror(JSqVM v, String err) {
+		return new JSqResult(sq_throwerror_native(v.m_nativeHandle, err));
 	}
 	
 	private static native int sq_throwerror_native(long v, String err);
 	
-	public static int sq_throwobject(JSqVM v) {
-		return sq_throwobject_native(v.m_nativeHandle);
+	public static JSqResult sq_throwobject(JSqVM v) {
+		return new JSqResult(sq_throwobject_native(v.m_nativeHandle));
 	}
 	
 	private static native int sq_throwobject_native(long v);
@@ -712,8 +727,8 @@ public class Squirrel {
 	
 	private static native int sq_collectgarbage_native(long v);
 	
-	public static int sq_resurrectunreachable(JSqVM v) {
-		return sq_resurrectunreachable_native(v.m_nativeHandle);
+	public static JSqResult sq_resurrectunreachable(JSqVM v) {
+		return new JSqResult(sq_resurrectunreachable_native(v.m_nativeHandle));
 	}
 	
 	private static native int sq_resurrectunreachable_native(long v);
