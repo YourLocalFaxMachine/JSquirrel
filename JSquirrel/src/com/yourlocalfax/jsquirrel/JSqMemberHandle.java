@@ -24,16 +24,11 @@ THE SOFTWARE.
 
 package com.yourlocalfax.jsquirrel;
 
-/**
- * The wrapper class for an HSQUIRRELVM.
- * Stores a pointer the the memory location of the VM in C++ code.
- * @author Christopher Foster
- */
-public class JSqVM {
+public class JSqMemberHandle {
 	
-	long m_nativeHandle;
+	final long m_nativeHandle;
 	
-	JSqVM(long handle) {
+	JSqMemberHandle(long handle) {
 		m_nativeHandle = handle;
 	}
 	

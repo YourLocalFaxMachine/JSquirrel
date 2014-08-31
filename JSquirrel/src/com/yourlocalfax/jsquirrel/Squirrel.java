@@ -85,6 +85,12 @@ public class Squirrel {
 	
 	// TODO SquirrelVM
 	
+	/**
+	 * Creates a new instance of a Squirrel VM with a new execution stack.
+	 * @param initialStackSize THe size of the stack in slots for the VM.
+	 * @return The new Squirrel VM.
+	 * @throws JSquirrelException
+	 */
 	public static JSqVM sq_open(int initialStackSize) throws JSquirrelException {
 		long handle = sq_open_native(initialStackSize);
 		if (handle == 0)
@@ -94,6 +100,13 @@ public class Squirrel {
 	
 	private static native long sq_open_native(int initialStackSize);
 	
+	/**
+	 * Creates a new VM friend of the one passed and pushes it to the stack as a "thread" object.
+	 * @param friend The friend VM the new thread belongs to.
+	 * @param initialStackSize The size of the stack in slots for the new thread.
+	 * @return The new Squirrel VM.
+	 * @throws JSquirrelException
+	 */
 	public static JSqVM sq_newthread(JSqVM friend, int initialStackSize) throws JSquirrelException {
 		long handle = sq_newthread_native(friend.m_nativeHandle, initialStackSize);
 		if (handle == 0)
@@ -103,24 +116,59 @@ public class Squirrel {
 	
 	private static native long sq_newthread_native(long v, int initialStackSize);
 	
+	/**
+	 * Releases the Squirrel VM and all related friend VMs.
+	 * @param v The Squirrel VM to close.
+	 */
 	public static void sq_close(JSqVM v) {
 		sq_close_native(v.m_nativeHandle);
 	}
 	
 	private static native void sq_close_native(long v);
 	
+	/**
+	 * Suspends the execution of the target Squirrel VM.
+	 * @param v The target Squirrel VM.
+	 * @return The result of this operation.
+	 * @see #SQ_SUCCEDED(JSqResult)
+	 * @see #SQ_FAILED(JSqResult)
+	 */
 	public static JSqResult sq_suspendvm(JSqVM v) {
 		return new JSqResult(sq_suspendvm_native(v.m_nativeHandle));
 	}
 	
 	private static native int sq_suspendvm_native(long v);
 	
+	/**
+	 * Wake up the execution of the previously suspended Squirrel VM.
+	 * <br><br>
+	 * If {@code resumedRet} is true a value will be popped from the stack and used as a return value for the function previously suspended in the VM.
+	 * <br><br>
+	 * If {@code retVal} is true the function will push the return value of the function that suspended this VMs execution or the main function one.
+	 * <br><br>
+	 * If raiseError is true a runtime error will invoke the error handler, if a runtime error occurs.
+	 * <br><br>
+	 * If throwError is true the VM will throw an exception as soon as it is resumed.
+	 * The exception payload must be set beforehand by invoking {@link #sq_throwerror(JSqVM, String)}. 
+	 * @param v The target Squirrel VM.
+	 * @param resumedRet 
+	 * @param retVal
+	 * @param raiseError
+	 * @param throwError
+	 * @return The result of this operation.
+	 * @see #SQ_SUCCEDED(JSqResult)
+	 * @see #SQ_FAILED(JSqResult)
+	 */
 	public static JSqResult sq_wakeupvm(JSqVM v, boolean resumedRet, boolean retVal, boolean raiseError, boolean throwError) {
 		return new JSqResult(sq_wakeupvm_native(v.m_nativeHandle, resumedRet, retVal, raiseError, throwError));
 	}
 	
 	private static native int sq_wakeupvm_native(long v, boolean resumedRet, boolean retVal, boolean raiseError, boolean throwError);
 	
+	/**
+	 * @param v The Squirrel VM in question.
+	 * @return The execution state of the given Squirrel VM.
+	 */
 	public static JSqVMState sq_getvmstate(JSqVM v) {
 		int res = sq_getvmstate_native(v.m_nativeHandle);
 		switch (res) {
@@ -136,60 +184,152 @@ public class Squirrel {
 	
 	private static native int sq_getvmstate_native(long v);
 	
+	/**
+	 * @return The version number of the Squirrel VM.
+	 */
 	public static native int sq_getversion();
 	
 	// TODO Compiler
 	
+	/**
+	 * Compiles a Squirrel program from a String.
+	 * If it succeedes, the compiled script is pushed as a function in the stack.
+	 * <br><br>
+	 * If raiseError is true the compiler error handler will be called in case of an error.
+	 * @param v The target Squirrel VM.
+	 * @param source The source code of the Squirrel program.
+	 * @param sourceName The name of the Squirrel program.
+	 * @param raiseError 
+	 * @return The result of this operation.
+	 * @see #SQ_SUCCEDED(JSqResult)
+	 * @see #SQ_FAILED(JSqResult)
+	 */
 	public static JSqResult sq_compilebuffer(JSqVM v, String source, String sourceName, boolean raiseError) {
 		return new JSqResult(sq_compilebuffer_native(v.m_nativeHandle, source, sourceName, raiseError));
 	}
 	
 	private static native int sq_compilebuffer_native(long v, String source, String sourceName, boolean raiseError);
 	
+	public static void sq_enabledebuginfo(JSqVM v, boolean enable) {
+		sq_enabledebuginfo_native(v.m_nativeHandle, enable);
+	}
+	
+	private static native void sq_enabledebuginfo_native(long v, boolean enable);
+	
+	/**
+	 * Enable/disable the error callback notification of handled exceptions.
+	 * @param v The target Squirrel VM.
+	 * @param enable
+	 */
+	public static void sq_notifyallexceptions(JSqVM v, boolean enable) {
+		sq_notifyallexceptions_native(v.m_nativeHandle, enable);
+	}
+	
+	private static native void sq_notifyallexceptions_native(long v, boolean enable);
+	
 	// TODO Stack Operations
 	
+	/**
+	 * Pushes the value at {@code idx} in the stack.
+	 * @param v The target Squirrel VM.
+	 * @param idx
+	 */
 	public static void sq_push(JSqVM v, int idx) {
 		sq_push_native(v.m_nativeHandle, idx);
 	}
 	
 	private static native void sq_push_native(long v, int idx);
 	
+	/**
+	 * Pops n elements form the stack.
+	 * @param v The target Squirrel VM.
+	 * @param numElementsToPop n elements to pop.
+	 */
 	public static void sq_pop(JSqVM v, int numElementsToPop) {
 		sq_pop_native(v.m_nativeHandle, numElementsToPop);
 	}
 	
 	private static native void sq_pop_native(long v, int numElementsToPop);
 	
+	/**
+	 * Pops one object from the top of the stack.
+	 * @param v The target Squirrel VM.
+	 */
 	public static void sq_poptop(JSqVM v) {
 		sq_poptop_native(v.m_nativeHandle);
 	}
 	
 	private static native void sq_poptop_native(long v);
 	
+	/**
+	 * Removes the element at {@code idx} in the stack.
+	 * @param v The target Squirrel VM.
+	 * @param idx
+	 */
 	public static void sq_remove(JSqVM v, int idx) {
 		sq_remove_native(v.m_nativeHandle, idx);
 	}
 	
 	private static native void sq_remove_native(long v, int idx);
 	
+	/**
+	 * @param v The target Squirrel VM.
+	 * @return The index of the top of the stack.
+	 */
 	public static int sq_gettop(JSqVM v) {
 		return sq_gettop_native(v.m_nativeHandle);
 	}
 	
 	private static native int sq_gettop_native(long v);
 	
+	/**
+	 * Resize the stack.
+	 * If the new top is bigger than the current top the function will push nulls.
+	 * @param v The target Squirrel VM.
+	 * @param newtop The new top index.
+	 */
 	public static void sq_settop(JSqVM v, int newtop) {
 		sq_settop_native(v.m_nativeHandle, newtop);
 	}
 	
 	private static native void sq_settop_native(long v, int newtop);
 	
+	/**
+	 * Ensure that the stack space left is at least of specified size.
+	 * If the stack is smaller it will automatically grow.
+	 * If there's a metamethod currently running the function will fail and the stack will not be resized, this situation has to be considered a "stack overflow".
+	 * @param v The target Squirrel VM.
+	 * @param nSize The new required stack size.
+	 * @return The result of this operation.
+	 * @see #SQ_SUCCEDED(JSqResult)
+	 * @see #SQ_FAILED(JSqResult)
+	 */
 	public static JSqResult sq_reservestack(JSqVM v, int nSize) {
 		return new JSqResult(sq_reservestack_native(v.m_nativeHandle, nSize));
 	}
 	
 	private static native int sq_reservestack_native(long v, int nSize);
+
+	/**
+	 * Compares two objects from the stack.
+	 * If the first object is greater than the second, returns a number greater than 0 (usually 1).
+	 * If the two objects are equal, returns 0.
+	 * Otherwise (the first object is less than the second) returns a number less than 0 (usually -1).
+	 * @param v The target Squirrel VM.
+	 * @return The result of the comparing.
+	 */
+	public static int sq_cmp(JSqVM v) {
+		return sq_cmp_native(v.m_nativeHandle);
+	}
 	
+	private static native int sq_cmp_native(long v);
+	
+	/**
+	 * Pushes the object at the position {@code idx} in the source VM stack to the destination VM stack.
+	 * @param dest The destination Squirrel VM.
+	 * @param src The source Squirrel VM.
+	 * @param idx The index in the source stack of the value that should be moved.
+	 */
 	public static void sq_move(JSqVM dest, JSqVM src, int idx) {
 		sq_move_native(dest.m_nativeHandle, src.m_nativeHandle, idx);
 	}
@@ -228,6 +368,16 @@ public class Squirrel {
 	
 	private static native int sq_setparamscheck_native(long v, int nParamsCheck, String typeMask); 
 	
+	/**
+	 * Pops an object from the stack (must be a table, instance or class), clones the closure at position {@code idx}
+	 * in the stack and sets the popped object as the environment of the cloned closure.
+	 * Then pushes the new cloned closure on the top of the stack.
+	 * @param v The target Squirrel VM.
+	 * @param idx
+	 * @return The result of this operation.
+	 * @see #SQ_SUCCEDED(JSqResult)
+	 * @see #SQ_FAILED(JSqResult)
+	 */
 	public static JSqResult sq_bindenv(JSqVM v, int idx) {
 		return new JSqResult(sq_bindenv_native(v.m_nativeHandle, idx));
 	}
@@ -338,6 +488,12 @@ public class Squirrel {
 	
 	private static native float sq_getfloat_native(long v, int idx);
 	
+	/**
+	 * Gets the value of the bool at position {@code idx} in the stack.
+	 * @param v The target Squirrel VM.
+	 * @param idx
+	 * @return The retrieved bool.
+	 */
 	public static boolean sq_getbool(JSqVM v, int idx) {
 		return sq_getbool_native(v.m_nativeHandle, idx);
 	}
@@ -393,6 +549,15 @@ public class Squirrel {
 	
 	private static native int sq_newclass_native(long v, boolean hasBase);
 	
+	/**
+	 * Creates an instance of the class at position {@code idx} in the stack.
+	 * The new class instance is pushed on top of the stack.
+	 * @param v The target Squirrel VM.
+	 * @param idx
+	 * @return The result of this operation.
+	 * @see #SQ_SUCCEDED(JSqResult)
+	 * @see #SQ_FAILED(JSqResult)
+	 */
 	public static JSqResult sq_createinstance(JSqVM v, int idx) {
 		return new JSqResult(sq_createinstance_native(v.m_nativeHandle, idx));
 	}
@@ -429,34 +594,76 @@ public class Squirrel {
 	
 	private static native int sq_getdefaultdelegate_native(long v, int tag);
 	
-	// get/set-handle
+	public static JSqMemberHandle sq_getmemberhandle(JSqVM v, int idx) {
+		return new JSqMemberHandle(sq_getmemberhandle_native(v.m_nativeHandle, idx));
+	}
+	
+	private static native long sq_getmemberhandle_native(long v, int idx);
+	
+	public static JSqResult sq_getbyhandle(JSqVM v, int idx, JSqMemberHandle memberHandle) {
+		return new JSqResult(sq_getbyhandle_native(v.m_nativeHandle, idx, memberHandle.m_nativeHandle));
+	}
+	
+	private static native int sq_getbyhandle_native(long v, int idx, long member);
+	
+	public static JSqResult sq_setbyhandle(JSqVM v, int idx, JSqMemberHandle memberHandle) {
+		return new JSqResult(sq_setbyhandle_native(v.m_nativeHandle, idx, memberHandle.m_nativeHandle));
+	}
+	
+	private static native int sq_setbyhandle_native(long v, int idx, long member);
 	
 	// TODO Object Manipulation
-	
+
+	/**
+	 * Pushes the current root table in the stack.
+	 * @param v The target Squirrel VM.
+	 */
 	public static void sq_pushroottable(JSqVM v) {
 		sq_pushroottable_native(v.m_nativeHandle);
 	}
 	
 	private static native void sq_pushroottable_native(long v);
-	
+
+	/**
+	 * Pushes the current registry table in the stack.
+	 * @param v The target Squirrel VM.
+	 */
 	public static void sq_pushregistrytable(JSqVM v) {
 		sq_pushregistrytable_native(v.m_nativeHandle);
 	}
 	
 	private static native void sq_pushregistrytable_native(long v);
 	
+	/**
+	 * Pushes the current const table in the stack.
+	 * @param v The target Squirrel VM.
+	 */
 	public static void sq_pushconsttable(JSqVM v) {
 		sq_pushconsttable_native(v.m_nativeHandle);
 	}
 	
 	private static native void sq_pushconsttable_native(long v);
 	
+	/**
+	 * Pops a table from the stack and sets it as the root table.
+	 * @param v The target Squirrel VM.
+	 * @return The result of this operation.
+	 * @see #SQ_SUCCEDED(JSqResult)
+	 * @see #SQ_FAILED(JSqResult)
+	 */
 	public static JSqResult sq_setroottable(JSqVM v) {
 		return new JSqResult(sq_setroottable_native(v.m_nativeHandle));
 	}
 	
 	private static native int sq_setroottable_native(long v);
 	
+	/**
+	 * Pops a table from the stack and sets it as a const table.
+	 * @param v The target Squirrel VM.
+	 * @return The result of this operation.
+	 * @see #SQ_SUCCEDED(JSqResult)
+	 * @see #SQ_FAILED(JSqResult)
+	 */
 	public static JSqResult sq_setconsttable(JSqVM v) {
 		return new JSqResult(sq_setconsttable_native(v.m_nativeHandle));
 	}
