@@ -525,6 +525,42 @@ public class Squirrel {
 	
 	private static native int sq_settypetag_native(long v, int idx);
 	
+	public static JSqUserPointer sq_gettypetag(JSqVM v, int idx) {
+		return new JSqUserPointer(sq_gettypetag_native(v.m_nativeHandle, idx));
+	}
+	
+	private static native long sq_gettypetag_native(long v, int idx);
+	
+	// releasehook, scratchpad
+	
+	public static JSqFunctionInfo sq_getfunctioninfo(JSqVM v, int idx) {
+		JSqFunctionInfo res = new JSqFunctionInfo();
+		long upid = sq_getfunctioninfo_native(v.m_nativeHandle, idx, res);
+		res.m_funcid = new JSqUserPointer(upid);
+		return res;
+	}
+	
+	private static native long sq_getfunctioninfo_native(long v, int idx, JSqFunctionInfo info);
+	
+	public static JSqClosureInfo sq_getclosureinfo(JSqVM v, int idx) {
+		int[] res = sq_getclosureinfo_native(v.m_nativeHandle, idx);
+		return new JSqClosureInfo(res[0], res[1]);
+	}
+	
+	private static native int[] sq_getclosureinfo_native(long v, int idx);
+	
+	public static JSqResult sq_getclosurename(JSqVM v, int idx) {
+		return new JSqResult(sq_getclosurename_native(v.m_nativeHandle, idx));
+	}
+	
+	private static native int sq_getclosurename_native(long v, int idx);
+	
+	public static JSqResult sq_setnativeclosurename(JSqVM v, int idx, String name) {
+		return new JSqResult(sq_setnativeclosurename_native(v.m_nativeHandle, idx, name));
+	}
+	
+	private static native int sq_setnativeclosurename_native(long v, int idx, String name);
+	
 	public static JSqResult sq_setinstanceup(JSqVM v, int idx, JSqUserPointer up) {
 		return new JSqResult(sq_setinstanceup_native(v.m_nativeHandle, idx, up.m_nativeHandle));
 	}
@@ -600,6 +636,16 @@ public class Squirrel {
 	
 	private static native long sq_getmemberhandle_native(long v, int idx);
 	
+	/**
+	 * Pushes the value of a class or instance member using a member handle.
+	 * @param v
+	 * @param idx
+	 * @param memberHandle
+	 * @return The result of this operation.
+	 * @see #SQ_SUCCEDED(JSqResult)
+	 * @see #SQ_FAILED(JSqResult)
+	 * @see #sq_getmemberhandle(JSqVM, int)
+	 */
 	public static JSqResult sq_getbyhandle(JSqVM v, int idx, JSqMemberHandle memberHandle) {
 		return new JSqResult(sq_getbyhandle_native(v.m_nativeHandle, idx, memberHandle.m_nativeHandle));
 	}
