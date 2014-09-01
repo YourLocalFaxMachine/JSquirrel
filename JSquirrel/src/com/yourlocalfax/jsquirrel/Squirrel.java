@@ -187,7 +187,11 @@ public class Squirrel {
 	/**
 	 * @return The version number of the Squirrel VM.
 	 */
-	public static native int sq_getversion();
+	public static int sq_getversion() {
+		return sq_getversion_native();
+	}
+	
+	public static native int sq_getversion_native();
 	
 	// TODO Compiler
 	
@@ -533,6 +537,7 @@ public class Squirrel {
 	
 	// releasehook, scratchpad
 	
+	// TODO DOES NOT WORK!
 	public static JSqFunctionInfo sq_getfunctioninfo(JSqVM v, int idx) {
 		JSqFunctionInfo res = new JSqFunctionInfo();
 		long upid = sq_getfunctioninfo_native(v.m_nativeHandle, idx, res);
@@ -541,20 +546,23 @@ public class Squirrel {
 	}
 	
 	private static native long sq_getfunctioninfo_native(long v, int idx, JSqFunctionInfo info);
-	
+
+	// TODO PROBABLY DOES NOT WORK!
 	public static JSqClosureInfo sq_getclosureinfo(JSqVM v, int idx) {
 		int[] res = sq_getclosureinfo_native(v.m_nativeHandle, idx);
 		return new JSqClosureInfo(res[0], res[1]);
 	}
 	
 	private static native int[] sq_getclosureinfo_native(long v, int idx);
-	
+
+	// TODO PROBABLY DOES NOT WORK!
 	public static JSqResult sq_getclosurename(JSqVM v, int idx) {
 		return new JSqResult(sq_getclosurename_native(v.m_nativeHandle, idx));
 	}
 	
 	private static native int sq_getclosurename_native(long v, int idx);
-	
+
+	// TODO PROBABLY DOES NOT WORK!
 	public static JSqResult sq_setnativeclosurename(JSqVM v, int idx, String name) {
 		return new JSqResult(sq_setnativeclosurename_native(v.m_nativeHandle, idx, name));
 	}

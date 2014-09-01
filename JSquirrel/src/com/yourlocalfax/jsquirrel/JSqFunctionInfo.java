@@ -29,4 +29,14 @@ public class JSqFunctionInfo {
 	JSqUserPointer m_funcid;
 	String m_name, m_source;
 	
+	public JSqUserPointer getFuncId() {
+		return m_funcid;
+	}
+	public String getName() {
+		return m_name;
+	}
+	public String getSource() {
+		return m_source;
+	}
+	
 }
